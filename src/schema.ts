@@ -1,7 +1,7 @@
 import {gql} from 'apollo-server-express'
 
 const typeDefs =  gql `
-    type Query {
+    extend type Query {
         User(loginData: LoginData): User!
     }
     
