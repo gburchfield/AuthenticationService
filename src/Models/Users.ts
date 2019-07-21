@@ -21,8 +21,6 @@ export class Users {
             throw new Error('Authentication Invalid')
         }
 
-        console.log(this.user)
-
         // User bcrypt to compare password
         let res = bcrypt.compareSync(password, this.user.password)
         if(res){
