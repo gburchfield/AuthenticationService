@@ -1,0 +1,7 @@
+FROM node:slim
+RUN apt-get update && apt-get install -y build-essential && apt-get install -y python
+WORKDIR "/app"
+COPY ./package.json ./
+RUN npm install
+COPY . .
+CMD ["npm","run","dev"]

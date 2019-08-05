@@ -3,12 +3,12 @@ const environment = process.env.NODE_ENV || 'dev'
 
 let config: ConfigParent = {
     dev: {
-        port: 4001,
-        secret: "development_secret",
-        cluster_uri: "mongodb+srv://development-b96of.mongodb.net/test?retryWrites=true&w=majority",
-        db_name: "Authentication",
-        db_user: "AuthenticationServiceUser",
-        db_password: "Password"
+        port: parseInt(process.env.PORT),
+        secret: process.env.SECRET_KEY,
+        cluster_uri: process.env.MONGODB_URL,
+        db_name: process.env.DB_NAME,
+        db_user: process.env.DB_USER,
+        db_password: process.env.DB_PASSWORD
     },
     prod: {
         port: 8080,
