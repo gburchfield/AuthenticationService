@@ -13,7 +13,7 @@ const typeDefs =  gql `
     
     type User {
         email: String!
-        username: String!
+        username: String
         token: ID
     }
     
@@ -23,7 +23,6 @@ const typeDefs =  gql `
     
     input NewUserData {
         email: String!
-        username: String!
         password: String!
     }   
 `

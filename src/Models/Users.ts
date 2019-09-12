@@ -37,17 +37,21 @@ export class Users {
         }
     }
 
-    async createUser({email, username, password}: CreateUserInput): Promise<any> {
+    async createUser({email, password}: CreateUserInput): Promise<any> {
         let salt = bcrypt.genSaltSync(10)
         let dbPassword = bcrypt.hashSync(password, salt)
-        let newUser = await this.collection.insertOne({email,username, password: dbPassword})
-        if(newUser.result.ok){
-            return {
-                email,
-                username
+        let existingUser = await this.collection.findOne({email:email})
+        if(!existingUser){
+            let newUser = await this.collection.insertOne({email, password: dbPassword})
+            if(newUser.result.ok){
+                return {
+                    email
+                }
+            } else {
+                throw new Error('Unable to create user in database')
             }
         } else {
-            throw new Error('Unable to create user in database')
+            throw new Error('User already exists')
         }
     }
 
@@ -61,7 +65,6 @@ interface LoginUserInput {
 
 interface CreateUserInput {
     email: string,
-    username: string,
     password: string
 }
 
