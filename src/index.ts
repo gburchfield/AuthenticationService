@@ -14,8 +14,7 @@ collection.then( users => {
         schema: buildFederatedSchema([{typeDefs, resolvers}]),
         context: ({req}) => {
             return {
-                headers: req.headers,
-                users: new Users({users})
+                users: new Users({users, headers: req.headers})
             }
         }
     })
