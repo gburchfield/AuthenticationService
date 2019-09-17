@@ -3,24 +3,26 @@ import {gql} from 'apollo-server-express'
 const typeDefs =  gql `
     extend type Query {
         Login(loginData: LoginData): ID!
-        UserID: UserID
-        
+        AllUsers: [User]
     }
     
     type Mutation {
         AddUser(newUser: NewUserData): Boolean!
         ChangeUserRoles(userId: String!, roles: [Roles!]!): Boolean!
+        DeleteUser(userId: String!): Boolean!
     }
     
-    type UserID {
-        user_id: ID!
+    type User {
+        _id: ID
+        email: String
+        username: String
+        roles: [Roles]
         profile: UserProfile
     }
     
     extend type UserProfile @key(fields: "user_id"){
         user_id: String! @external
-        email: String!
-        roles: [Roles!]!
+        authorization: User
     }
     
     input LoginData {

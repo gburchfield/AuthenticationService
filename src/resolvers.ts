@@ -4,8 +4,8 @@ export const resolvers = {
         Login: (parent: any, {loginData}: {loginData:any}, context: any ) => {
             return context.users.loginUser({...loginData})
         },
-        UserID: (parent: any, args: any, context: any ) => {
-            return context.users.getUserId()
+        AllUsers: (parent: any, {loginData}: {loginData:any}, context: any ) => {
+            return context.users.getAll()
         }
     },
     Mutation: {
@@ -13,22 +13,21 @@ export const resolvers = {
         ChangeUserRoles: (parent: any, args: any, context: any) => {
             let { userId, roles } = args
             return context.users.addRoleToUser(userId, roles)
-        }
-    },
-    UserID: {
-        profile(userid: any) {
-            return { __typename: "UserProfile", user_id: userid.user_id }
+        },
+        DeleteUser: (parent: any, args: any, context: any) => {
+            let { userId } = args
+            return context.users.deleteUser(userId)
         }
     },
     UserProfile: {
-        email: (_:any, __:any, context:any) => {
-            console.log(_)
-            console.log(context)
-            return context.users.getUserEmail()
-        },
-        roles: (_:any, __:any, context:any) => {
-            console.log(_)
-            return context.users.getUserRoles()
+        authorization: (parent:any, __:any, context:any) => {
+            return context.users.getUser(parent.user_id)
+        }
+    },
+    User: {
+        profile: (parent:any, __:any, context:any) => {
+            console.log(parent)
+            return { __typename: "UserProfile", user_id: parent._id }
         }
     }
 }

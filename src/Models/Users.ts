@@ -17,25 +17,35 @@ export class Users {
         }
     }
 
-    getUserId() : string {
+    async getUser(id: string) : Promise<any> {
         if(!this.user){
             throw new AuthenticationError('Not Authenticated')
         }
-        return this.user._id.toString()
+        let user = await this.collection.findOne({ _id: new ObjectId(id) }, { projection: { password: 0 } })
+        return user
     }
 
-    getUserEmail() : string {
+    async getAll() : Promise<any> {
         if(!this.user){
             throw new AuthenticationError('Not Authenticated')
         }
-        return this.user.email
+        if(!this.user.roles.includes(Roles.Admin)){
+            throw new AuthenticationError('Not Allowed')
+        }
+        let users = await this.collection.find({}, { projection: { password: 0 } }).toArray()
+        return users
     }
 
-    getUserRoles() : [Roles] {
+    async deleteUser( id: string ) : Promise<boolean> {
         if(!this.user){
             throw new AuthenticationError('Not Authenticated')
         }
-        return this.user.roles
+        if(!this.user.roles.includes(Roles.Admin)){
+            throw new AuthenticationError('Not Allowed')
+        }
+        let result = await this.collection.findOneAndDelete({ _id: new ObjectId(id)})
+        console.log(result)
+        return !!result.value
     }
 
     async loginUser({ email, username, password }: LoginUserInput): Promise<string> {
@@ -81,9 +91,9 @@ export class Users {
         if(!this.user){
             throw new AuthenticationError('Not Authenticated')
         }
-        // if(!this.user.roles.inclues(Roles.Admin)){
-        //     throw new AuthenticationError('Not Authorized')
-        // }
+        if(!this.user.roles.includes(Roles.Admin)){
+            throw new AuthenticationError('Not Allowed')
+        }
         const id = new ObjectId(userId)
         try {
             const updatedUser = await this.collection.findOneAndUpdate({_id:id},{ $set: { roles: roles } }, { returnOriginal: false })

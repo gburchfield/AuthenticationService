@@ -5,7 +5,7 @@ let config: ConfigParent = {
     dev: {
         port: parseInt(process.env.PORT),
         secret: process.env.SECRET_KEY,
-        cluster_uri: process.env.MONGODB_URL,
+        cluster_uri: `${process.env.MONGODB_URL}:${process.env.MONGODB_PORT}/${process.env.DB_NAME}`,
         db_name: process.env.DB_NAME,
         db_user: process.env.DB_USER,
         db_password: process.env.DB_PASSWORD
