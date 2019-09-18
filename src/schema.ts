@@ -7,9 +7,9 @@ const typeDefs =  gql `
     }
     
     type Mutation {
-        AddUser(newUser: NewUserData): Boolean!
+        CreateUser(newUser: NewUserData): Boolean!
         ChangeUserRoles(userId: String!, roles: [Roles!]!): Boolean!
-        DeleteUser(userId: String!): Boolean!
+        DeleteUser(userId: String, email: String): Boolean!
     }
     
     type User {

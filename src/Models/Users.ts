@@ -36,16 +36,23 @@ export class Users {
         return users
     }
 
-    async deleteUser( id: string ) : Promise<boolean> {
+    async deleteUser( args: any ) : Promise<boolean> {
+        let { id, email } = args
+        let result
         if(!this.user){
             throw new AuthenticationError('Not Authenticated')
         }
         if(!this.user.roles.includes(Roles.Admin)){
             throw new AuthenticationError('Not Allowed')
         }
-        let result = await this.collection.findOneAndDelete({ _id: new ObjectId(id)})
-        console.log(result)
-        return !!result.value
+        if(id){
+            result = await this.collection.findOneAndDelete({ _id: new ObjectId(id)})
+            return !!result.value
+        }
+        if(email){
+            result = await this.collection.deleteMany({ email: email })
+            return !!result.result.ok
+        }
     }
 
     async loginUser({ email, username, password }: LoginUserInput): Promise<string> {
@@ -54,21 +61,22 @@ export class Users {
             user = await this.collection.findOne({email})
         } else if (username){
             user = await this.collection.findOne({username})
-        } else {
-            throw new Error('Authentication Invalid')
         }
 
-        // User bcrypt to compare password
-        let res = bcrypt.compareSync(password, user.password)
-        if(res){
-            console.log(user)
-            let tokenData: TokenData = {
-                _id: user._id.toString(),
-                email: user.email,
-                roles: user.roles
+        if(user){
+            // User bcrypt to compare password
+            let res = bcrypt.compareSync(password, user.password)
+            if(res){
+                let tokenData: TokenData = {
+                    _id: user._id.toString(),
+                    email: user.email,
+                    roles: user.roles
+                }
+                let token: string = jwt.sign(JSON.stringify(tokenData), config.secret)
+                return token
+            } else {
+                throw new Error('Authentication Invalid')
             }
-            let token: string = jwt.sign(JSON.stringify(tokenData), config.secret)
-            return token
         } else {
             throw new Error('Authentication Invalid')
         }
