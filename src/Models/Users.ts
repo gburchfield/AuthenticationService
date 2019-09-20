@@ -3,10 +3,12 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import config from "../config"
 import { AuthenticationError } from 'apollo-server-express'
+import redis, {RedisClient} from 'redis'
 
 export class Users {
     private collection: Collection
     private user: any
+    private EventBus: RedisClient = redis.createClient('redis://redis')
 
     constructor(args: any){
         let { users, headers } = args
@@ -17,42 +19,54 @@ export class Users {
         }
     }
 
-    async getUser(id: string) : Promise<any> {
+    private isAllowed(role: string = Roles.Basic): void {
         if(!this.user){
             throw new AuthenticationError('Not Authenticated')
         }
+        if(role === Roles.Admin && !this.user.roles.includes(Roles.Admin)){
+            throw new AuthenticationError('Not Allowed')
+        }
+    }
+
+    async getUser(id: string) : Promise<any> {
+        this.isAllowed()
         let user = await this.collection.findOne({ _id: new ObjectId(id) }, { projection: { password: 0 } })
         return user
     }
 
     async getAll() : Promise<any> {
-        if(!this.user){
-            throw new AuthenticationError('Not Authenticated')
-        }
-        if(!this.user.roles.includes(Roles.Admin)){
-            throw new AuthenticationError('Not Allowed')
-        }
+        this.isAllowed(Roles.Admin)
         let users = await this.collection.find({}, { projection: { password: 0 } }).toArray()
         return users
     }
 
     async deleteUser( args: any ) : Promise<boolean> {
+        this.isAllowed(Roles.Admin)
         let { id, email } = args
-        let result
-        if(!this.user){
-            throw new AuthenticationError('Not Authenticated')
-        }
-        if(!this.user.roles.includes(Roles.Admin)){
-            throw new AuthenticationError('Not Allowed')
-        }
+        let query, userDeleted
         if(id){
-            result = await this.collection.findOneAndDelete({ _id: new ObjectId(id)})
-            return !!result.value
+            query = { _id: new ObjectId(id) }
         }
         if(email){
-            result = await this.collection.deleteMany({ email: email })
-            return !!result.result.ok
+            query = {  email: email  }
         }
+
+        let result = await this.collection.findOneAndDelete(query)
+        if(result.ok && result.value){
+            userDeleted = true
+            // Send Message to Queue to tell other services to delete this user if the delete is successful here
+            let deletedUser = result.value
+            let msg: any = {
+                action: 'DELETE_USER',
+                id: deletedUser._id.toString()
+            }
+            msg = JSON.stringify(msg)
+            console.log(deletedUser, msg)
+            this.EventBus.publish("USER_DATA", msg)
+        } else {
+            userDeleted = false
+        }
+        return userDeleted
     }
 
     async loginUser({ email, username, password }: LoginUserInput): Promise<string> {
