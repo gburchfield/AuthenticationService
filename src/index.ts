@@ -1,29 +1,33 @@
-import express from 'express'
-import { ApolloServer} from "apollo-server-express";
-import { buildFederatedSchema } from "@apollo/federation";
-import { createDb } from './db'
+import {ServiceNodeConfig} from "socialbrokernode/dist/lib/Types";
+import {Users, UsersInterface} from "./Models/Users";
 import typeDefs from './schema'
 import {resolvers} from "./resolvers";
-import { Users } from "./Models/Users";
-import config from "./config"
+import {ServiceNode} from "socialbrokernode";
+import dotenv from 'dotenv'
+dotenv.config()
 
-const collection = createDb('users')
 
-collection.then( users => {
-    const server = new ApolloServer({
-        schema: buildFederatedSchema([{typeDefs, resolvers}]),
-        context: ({req}) => {
-            return {
-                users: new Users({users, headers: req.headers})
-            }
-        }
-    })
+let config: ServiceNodeConfig<UsersInterface> = {
+    port: process.env.PORT,
+    secret: process.env.SECRET_KEY,
+    database_config: {
+        cluster_uri: `${process.env.MONGODB_URL}:${process.env.MONGODB_PORT}/${process.env.DB_NAME}`,
+        name: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD
+    },
+    typeDefs: typeDefs,
+    resolvers: resolvers,
+    collection: {
+        name: 'users',
+        model: Users
+    }
+}
 
-    const app = express()
-    server.applyMiddleware({app})
+let AuthenticationService: ServiceNode<UsersInterface> = new ServiceNode<UsersInterface>(config)
 
-    app.listen({ port: config.port }, () =>
-        console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)
-    );
-
-} )
+AuthenticationService.buildServiceServer().then(() =>{
+    AuthenticationService.start()
+}).catch(e => {
+    console.log(e)
+})

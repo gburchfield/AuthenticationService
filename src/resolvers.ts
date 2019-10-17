@@ -1,18 +1,18 @@
 
 export const resolvers = {
     Query: {
-        Login: (parent: any, {loginData}: {loginData:any}, context: any ) => {
-            return context.users.loginUser({...loginData})
+        Login: (parent: any, {authInput}: {authInput:any}, context: any ) => {
+            return context.users.loginUser({...authInput})
         },
         AllUsers: (parent: any, {loginData}: {loginData:any}, context: any ) => {
             return context.users.getAll()
         }
     },
     Mutation: {
-        CreateUser: (parent: any, {newUser}: {newUser:any}, context: any) => context.users.createUser({...newUser}),
+        CreateUser: (parent: any, {authInput}: {authInput:any}, context: any) => context.users.createUser({...authInput}),
         ChangeUserRoles: (parent: any, args: any, context: any) => {
-            let { userId, roles } = args
-            return context.users.addRoleToUser(userId, roles)
+            let { userId, type } = args
+            return context.users.changeUserType(userId, type)
         },
         DeleteUser: (parent: any, args: any, context: any) => {
             let { userId, email } = args

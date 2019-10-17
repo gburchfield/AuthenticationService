@@ -1,7 +1,19 @@
-FROM node:slim
-RUN apt-get update && apt-get install -y build-essential && apt-get install -y python
-WORKDIR "/app"
-COPY ./package.json ./
-RUN npm install
-COPY . .
-CMD ["npm","run","dev"]
+FROM node:10.16.3 as intermediate
+
+                       ARG SSH_PRIVATE_KEY
+                       RUN mkdir /root/.ssh/
+                       RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
+                       RUN chmod 0600 /root/.ssh/id_rsa
+
+                       RUN touch /root/.ssh/known_hosts
+                       RUN ssh-keyscan ssh.dev.azure.com >> /root/.ssh/known_hosts
+
+                       WORKDIR "/app"
+                       COPY ./package.json ./
+                       RUN eval `ssh-agent` && ssh-add /root/.ssh/id_rsa && npm install
+
+                       FROM node:10.16.3
+                       WORKDIR "/app"
+                       COPY --from=intermediate /app /app
+                       COPY . .
+                       CMD ["npm","run","dev"]

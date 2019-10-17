@@ -2,21 +2,26 @@ import {gql} from 'apollo-server-express'
 
 const typeDefs =  gql `
     extend type Query {
-        Login(loginData: LoginData): ID!
+        Login(authInput: AuthInputData): AuthResponse!
         AllUsers: [User]
     }
     
     type Mutation {
-        CreateUser(newUser: NewUserData): Boolean!
-        ChangeUserRoles(userId: String!, roles: [Roles!]!): Boolean!
+        CreateUser(authInput: AuthInputData): Boolean!
+        ChangeUserType(userId: String!, type: UserType!): Boolean!
         DeleteUser(userId: String, email: String): Boolean!
     }
     
+    type AuthResponse {
+        token: String
+        isNewUser: Boolean
+        userType: UserType
+    }
+    
     type User {
-        _id: ID
-        email: String
-        username: String
-        roles: [Roles]
+        _id: ID!
+        email: String!
+        type: UserType!
         profile: UserProfile
     }
     
@@ -25,21 +30,17 @@ const typeDefs =  gql `
         authorization: User
     }
     
-    input LoginData {
-        email: String
-        username: String
-        password: String!
-    }
-    
-    input NewUserData {
+    input AuthInputData {
         email: String!
         password: String!
     }
     
-    enum Roles {
+    enum UserType {
         Admin
-        Premium
-        Basic
+        Owner
+        Employee
+        Student
+        Fan
     }
        
 `
